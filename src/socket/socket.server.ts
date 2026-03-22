@@ -7,6 +7,7 @@ import { Server as SocketServer } from "socket.io";
 import jwt from "jsonwebtoken";
 import { prisma } from "../config/prisma.js";
 import { env } from "../config/env.js";
+import { supabaseAdmin } from "../config/supabase.js";
 import { logger } from "../utils/logger.js";
 import { registerChatGateway } from "./chat.gateway.js";
 import { registerSignalingGateway } from "./signaling.gateway.js";
@@ -35,7 +36,14 @@ export function createSocketServer(httpServer: HttpServer) {
     httpServer,
     {
       cors: {
-        origin: env.ALLOWED_ORIGINS,
+        origin: (origin, callback) => {
+          // Native Android clients often send no Origin.
+          if (!origin || env.ALLOWED_ORIGINS.includes(origin)) {
+            callback(null, true);
+            return;
+          }
+          callback(new Error(`origin ${origin} not in allowlist`), false);
+        },
         methods: ["GET", "POST"],
         credentials: true,
       },
@@ -60,19 +68,24 @@ export function createSocketServer(httpServer: HttpServer) {
         return next(new Error("missing auth token"));
       }
 
-      let decoded: jwt.JwtPayload;
+      let userId: string | undefined;
       try {
-        decoded = jwt.verify(token, env.SUPABASE_JWT_SECRET) as jwt.JwtPayload;
+        const decoded = jwt.verify(token, env.SUPABASE_JWT_SECRET) as jwt.JwtPayload;
+        userId = typeof decoded.sub === "string" ? decoded.sub : undefined;
       } catch {
-        return next(new Error("invalid or expired token"));
+        const { data, error } = await supabaseAdmin.auth.getUser(token);
+        if (error || !data?.user?.id) {
+          return next(new Error("invalid or expired token"));
+        }
+        userId = data.user.id;
       }
 
-      if (!decoded.sub) {
+      if (!userId) {
         return next(new Error("token missing subject"));
       }
 
       const user = await prisma.user.findUnique({
-        where: { id: decoded.sub },
+        where: { id: userId },
         select: { id: true, username: true, languageCode: true },
       });
 

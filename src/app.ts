@@ -52,6 +52,72 @@ export function createApp(): Express {
 
   app.use("/api", apiRateLimiter);
 
+  // invite link route for room joins from web/qr.
+  // deep-link enabled devices can open the app directly via squadlink://room.
+  app.get("/invite", (req, res) => {
+    const rawCode = String(req.query.code ?? "").trim().toUpperCase();
+    const isValidCode = /^[A-Z0-9]{6}$/.test(rawCode);
+    const deepLink = isValidCode ? `squadlink://room?code=${rawCode}` : "squadlink://room";
+
+    res.send(`
+      <!doctype html>
+      <html lang="en">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>SquadLink Invite</title>
+        <style>
+          body {
+            margin: 0;
+            padding: 24px;
+            background: #0a0a0a;
+            color: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          }
+          .card {
+            max-width: 520px;
+            margin: 40px auto;
+            padding: 20px;
+            border: 1px solid #1f1f1f;
+            border-radius: 14px;
+            background: #121212;
+          }
+          .code {
+            color: #22c55e;
+            font-weight: 700;
+            letter-spacing: 2px;
+            font-size: 20px;
+            margin-top: 8px;
+          }
+          .btn {
+            display: inline-block;
+            margin-top: 16px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            background: #16a34a;
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+          }
+          .muted { color: #a3a3a3; margin-top: 12px; line-height: 1.5; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <h2>SquadLink Invite</h2>
+          ${
+            isValidCode
+              ? `<p>Room code:</p><div class="code">${rawCode}</div>`
+              : `<p class="muted">Invalid invite code. Ask your teammate to share a fresh link.</p>`
+          }
+          <a class="btn" href="${deepLink}">Open in SquadLink App</a>
+          <p class="muted">If the app does not open automatically, copy the code and join manually inside SquadLink.</p>
+        </div>
+      </body>
+      </html>
+    `);
+  });
+
   // Root page for direct visits and Supabase redirect landings.
   // It only shows "Email verified" when a real auth hash contains access_token.
   app.get("/", (_req, res) => {
