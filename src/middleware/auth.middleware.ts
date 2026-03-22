@@ -43,12 +43,17 @@ export async function requireAuth(
       select: { id: true, username: true, languageCode: true },
     });
 
-    if (!user) {
+    // special case: if the user is creating their profile, they won't be in the DB yet
+    // we allow this to proceed as long as they have a valid Supabase JWT
+    const isProfileCreation = req.baseUrl === "/api/auth" && req.path === "/profile" && req.method === "POST";
+
+    if (!user && !isProfileCreation) {
       // user authenticated with supabase but hasn't completed their squadlink profile
       throw new AppError("user profile not found - please complete onboarding", 404, "PROFILE_NOT_FOUND");
     }
 
-    req.user = user;
+    // attach user to request. for profile creation, we only have the id from the token
+    req.user = user || ({ id: userId, username: "", languageCode: "" } as any);
     next();
   } catch (err) {
     logger.debug("auth middleware rejected request", { error: (err as Error).message });

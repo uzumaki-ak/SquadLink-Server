@@ -8,16 +8,6 @@ interface SuccessResponse<T> {
   success: true;
   data: T;
 }
-
-interface ErrorResponse {
-  success: false;
-  error: {
-    message: string;
-    code?: string;     // machine-readable code e.g. "ROOM_NOT_FOUND"
-    details?: unknown; // validation errors etc - only in dev
-  };
-}
-
 // sends a 200 success response
 export function sendSuccess<T>(res: Response, data: T, statusCode = 200): void {
   const body: SuccessResponse<T> = { success: true, data };
