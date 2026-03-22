@@ -24,9 +24,10 @@ async function bootstrap() {
   // attach socket.io to the same http server
   const io = createSocketServer(httpServer);
 
-  httpServer.listen(env.PORT, () => {
+  httpServer.listen(env.PORT, "0.0.0.0", () => {
     logger.info(`squadlink-server running`, {
       port: env.PORT,
+      host: "0.0.0.0",
       env: env.NODE_ENV,
     });
   });

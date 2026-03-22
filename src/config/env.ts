@@ -5,7 +5,8 @@ import { z } from "zod";
 
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
-  PORT: z.coerce.number().default(4000),
+  // Render web services commonly expose 10000 if PORT is not explicitly set
+  PORT: z.coerce.number().default(10000),
 
   SUPABASE_URL: z.string().url("SUPABASE_URL must be a valid url"),
   SUPABASE_ANON_KEY: z.string().min(1, "SUPABASE_ANON_KEY is required"),

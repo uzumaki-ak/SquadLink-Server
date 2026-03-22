@@ -42,7 +42,7 @@ COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/prisma ./prisma
 
 # expose the port defined in env
-EXPOSE 4000
+EXPOSE 10000
 
 # start the server
 CMD ["node", "dist/server.js"]
