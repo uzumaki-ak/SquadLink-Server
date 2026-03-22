@@ -16,6 +16,12 @@ import translateRoutes from "./modules/translate/translate.routes.js";
 
 export function createApp(): Express {
   const app = express();
+  
+  // ─── environment settings ─────────────────────────────────────────────────
+  // render uses a reverse proxy, required for express-rate-limit to get the real ip
+  if (env.NODE_ENV === "production") {
+    app.set("trust proxy", 1);
+  }
 
   // ─── security headers ─────────────────────────────────────────────────────
   app.use(
