@@ -1,0 +1,105 @@
+// squadlink database schema
+// all tables map to real game session needs - users, rooms, messages, subtitle logs
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────────────────────────
+// users
+// synced with supabase auth - we only store game-specific profile data here
+// supabase auth handles passwords and sessions
+// ─────────────────────────────────────────────
+model User {
+  id              String    @id                    // matches supabase auth user id (uuid)
+  username        String    @unique @db.VarChar(30)
+  languageCode    String    @default("en") @db.VarChar(10)  // bcp-47 code e.g. "hi", "en", "ja"
+  avatarUrl       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // relations
+  hostedRooms     Room[]         @relation("RoomHost")
+  memberships     RoomMember[]
+  messages        Message[]
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────
+// rooms
+// a room is one game session's communication channel
+// expires automatically after inactivity
+// ─────────────────────────────────────────────
+model Room {
+  id          String      @id @default(cuid())
+  code        String      @unique @db.VarChar(8)   // short invite code e.g. "XKCD4821"
+  hostId      String
+  host        User        @relation("RoomHost", fields: [hostId], references: [id], onDelete: Cascade)
+  maxMembers  Int         @default(8)
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  expiresAt   DateTime                              // rooms auto-expire after 4 hours
+
+  // relations
+  members     RoomMember[]
+  messages    Message[]
+
+  @@index([code])
+  @@index([isActive])
+  @@map("rooms")
+}
+
+// ─────────────────────────────────────────────
+// room_members
+// tracks who is currently in a room and their mic/language state
+// ─────────────────────────────────────────────
+model RoomMember {
+  id           String       @id @default(cuid())
+  roomId       String
+  room         Room         @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt     DateTime     @default(now())
+  leftAt       DateTime?                            // null = still in room
+  isMuted      Boolean      @default(false)
+
+  @@unique([roomId, userId])                        // one membership per user per room
+  @@index([roomId])
+  @@map("room_members")
+}
+
+// ─────────────────────────────────────────────
+// messages
+// stores all chat messages + subtitle transcripts for in-room chat history
+// type field separates text chat, quick commands, and subtitle logs
+// ─────────────────────────────────────────────
+model Message {
+  id              String      @id @default(cuid())
+  roomId          String
+  room            Room        @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  senderId        String
+  sender          User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  type            MessageType @default(TEXT)
+  content         String      @db.Text                      // original text
+  translatedContent String?   @db.Text                      // server-side translated text if any
+  originalLang    String?     @db.VarChar(10)               // bcp-47
+  createdAt       DateTime    @default(now())
+
+  @@index([roomId, createdAt])
+  @@index([senderId])
+  @@map("messages")
+}
+
+enum MessageType {
+  TEXT          // normal typed chat
+  QUICK_CMD     // preset quick commands like "rush now"
+  SUBTITLE      // transcribed voice turned into subtitle log
+}
