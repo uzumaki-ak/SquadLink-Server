@@ -83,6 +83,58 @@ export function createApp(): Express {
     `);
   });
 
+  // ─── dynamic landing page ────────────────────────────────────────────────
+  // handles supabase auth redirects and shows state based on url hash
+  app.get("/", (_req, res) => {
+    res.send(`
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>SquadLink | Auth</title>
+          <style>
+              body { font-family: -apple-system, blinkmacsystemfont, \"Segoe UI\", roboto, sans-serif; background: #0a0a0a; color: #fff; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; }
+              .card { border: 1px solid #333; padding: 40px; border-radius: 16px; background: #111; max-width: 400px; width: 90%; }
+              h1 { margin-bottom: 12px; font-size: 24px; }
+              #status.success { color: #00ff41; }
+              #status.error { color: #ff4b2b; }
+              p { color: #888; line-height: 1.5; }
+              .hidden { display: none; }
+          </style>
+      </head>
+      <body>
+          <div id=\"content\" class=\"card hidden\">
+              <h1 id=\"status\">Verifying...</h1>
+              <p id=\"msg\">Please wait while we check your credentials.</p>
+          </div>
+
+          <script>
+              const hash = window.location.hash;
+              const params = new URLSearchParams(hash.substring(1));
+              const content = document.getElementById('content');
+              const status = document.getElementById('status');
+              const msg = document.getElementById('msg');
+
+              if (params.has('access_token')) {
+                  content.classList.remove('hidden');
+                  status.innerText = 'Email Verified!';
+                  status.className = 'success';
+                  msg.innerText = 'Your account is now confirmed. You can return to the app and sign in.';
+              } else if (params.has('error_description')) {
+                  content.classList.remove('hidden');
+                  status.innerText = 'Verification Error';
+                  status.className = 'error';
+                  msg.innerText = decodeURIComponent(params.get('error_description')).replace(/\\+/g, ' ');
+              } else {
+                  window.location.href = '/health';
+              }
+          </script>
+      </body>
+      </html>
+    `);
+  });
+
   // ─── health check ─────────────────────────────────────────────────────────
   app.get("/health", (_req, res) => {
     sendSuccess(res, { status: "ok", uptime: process.uptime(), timestamp: new Date().toISOString() });
