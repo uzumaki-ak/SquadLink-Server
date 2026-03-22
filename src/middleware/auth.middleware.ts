@@ -5,6 +5,7 @@ import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { prisma } from "../config/prisma.js";
 import { env } from "../config/env.js";
+import { supabaseAdmin } from "../config/supabase.js";
 import { AppError } from "../utils/response.js";
 import { logger } from "../utils/logger.js";
 
@@ -23,15 +24,21 @@ export async function requireAuth(
 
     const token = authHeader.slice(7); // strip "Bearer "
 
-    // verify signature - throws if expired or tampered
-    let decoded: jwt.JwtPayload;
+    let userId: string | undefined;
+
+    // Fast path: local JWT verification with the configured secret.
+    // Fallback: verify token via Supabase Admin API for compatibility.
     try {
-      decoded = jwt.verify(token, env.SUPABASE_JWT_SECRET) as jwt.JwtPayload;
+      const decoded = jwt.verify(token, env.SUPABASE_JWT_SECRET) as jwt.JwtPayload;
+      userId = typeof decoded.sub === "string" ? decoded.sub : undefined;
     } catch {
-      throw new AppError("invalid or expired token", 401, "TOKEN_INVALID");
+      const { data, error } = await supabaseAdmin.auth.getUser(token);
+      if (error || !data?.user?.id) {
+        throw new AppError("invalid or expired token", 401, "TOKEN_INVALID");
+      }
+      userId = data.user.id;
     }
 
-    const userId = decoded.sub;
     if (!userId) {
       throw new AppError("token has no subject claim", 401, "TOKEN_INVALID");
     }
