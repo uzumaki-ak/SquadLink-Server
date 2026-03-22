@@ -1,7 +1,4 @@
-// express app factory
-// separated from server.ts so the app can be tested without binding to a port
-
-import express from "express";
+import express, { Express } from "express";
 import helmet from "helmet";
 import cors from "cors";
 import compression from "compression";
@@ -17,7 +14,7 @@ import roomsRoutes from "./modules/rooms/rooms.routes.js";
 import chatRoutes from "./modules/chat/chat.routes.js";
 import translateRoutes from "./modules/translate/translate.routes.js";
 
-export function createApp() {
+export function createApp(): Express {
   const app = express();
 
   // ─── security headers ─────────────────────────────────────────────────────

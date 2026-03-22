@@ -25,23 +25,22 @@ export function sendSuccess<T>(res: Response, data: T, statusCode = 200): void {
 }
 
 // sends an error response - never leaks stack traces in production
-export function sendError(
+export const sendError = (
   res: Response,
   message: string,
   statusCode = 500,
-  code?: string,
-  details?: unknown
-): void {
-  const body: ErrorResponse = {
+  code = "INTERNAL_SERVER_ERROR",
+  details?: any
+): void => {
+  res.status(statusCode).json({
     success: false,
     error: {
       message,
-      ...(code && { code }),
+      code,
       ...(details && { details }),
     },
-  };
-  res.status(statusCode).json(body);
-}
+  });
+};
 
 // typed app error class so we can throw structured errors from anywhere
 export class AppError extends Error {

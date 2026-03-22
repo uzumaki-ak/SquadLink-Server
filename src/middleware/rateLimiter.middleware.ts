@@ -6,14 +6,6 @@ import rateLimit from "express-rate-limit";
 import { sendError } from "../utils/response.js";
 
 // shared handler so the response shape stays consistent with the rest of the api
-const rateLimitHandler = (
-  _req: Parameters<typeof rateLimit>[0] extends { handler: infer H } ? never : never,
-  res: Parameters<ReturnType<typeof rateLimit>>[1],
-  _next: Parameters<ReturnType<typeof rateLimit>>[2],
-  options: { message: string }
-) => {
-  sendError(res as any, options.message, 429, "RATE_LIMITED");
-};
 
 // auth endpoints: login, register - strict to prevent brute force
 export const authRateLimiter = rateLimit({
