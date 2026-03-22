@@ -8,7 +8,7 @@ import { requireAuth } from "../../middleware/auth.middleware.js";
 import { validate } from "../../middleware/validate.middleware.js";
 import { updateProfileSchema } from "./users.types.js";
 
-const router = Router();
+const router: Router = Router();
 
 router.patch("/me", requireAuth, validate(updateProfileSchema), usersController.updateProfile);
 router.get("/me/rooms", requireAuth, usersController.getRoomHistory);

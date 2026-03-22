@@ -8,7 +8,7 @@ import { validate } from "../../middleware/validate.middleware.js";
 import { translateTextSchema } from "./translate.types.js";
 import { translateRateLimiter } from "../../middleware/rateLimiter.middleware.js";
 
-const router = Router();
+const router: Router = Router();
 
 router.post(
   "/",

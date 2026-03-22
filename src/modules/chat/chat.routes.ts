@@ -5,7 +5,7 @@ import { Router } from "express";
 import { chatController } from "./chat.controller.js";
 import { requireAuth } from "../../middleware/auth.middleware.js";
 
-const router = Router();
+const router: Router = Router();
 
 router.get("/:roomId/history", requireAuth, chatController.getChatHistory);
 

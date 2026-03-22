@@ -9,7 +9,7 @@ import { requireAuth } from "../../middleware/auth.middleware.js";
 import { validate, langCodeSchema } from "../../middleware/validate.middleware.js";
 import { z } from "zod";
 
-const router = Router();
+const router: Router = Router();
 
 router.post("/profile", requireAuth, authController.createProfile);
 router.get("/profile", requireAuth, authController.getProfile);

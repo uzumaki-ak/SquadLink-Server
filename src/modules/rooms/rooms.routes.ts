@@ -13,7 +13,7 @@ import { createRoomSchema, joinRoomSchema } from "./rooms.types.js";
 import { roomCreateRateLimiter } from "../../middleware/rateLimiter.middleware.js";
 import { z } from "zod";
 
-const router = Router();
+const router: Router = Router();
 
 // all room routes require auth
 router.use(requireAuth);
