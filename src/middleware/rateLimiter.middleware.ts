@@ -14,7 +14,7 @@ export const authRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: "too many attempts, please wait 15 minutes",
-  handler: (req, res) => sendError(res, "too many auth attempts, wait 15 minutes", 429, "RATE_LIMITED"),
+  handler: (_req, res) => sendError(res, "too many auth attempts, wait 15 minutes", 429, "RATE_LIMITED"),
 });
 
 // general api endpoints - generous for normal use, still blocks abuse
@@ -23,7 +23,7 @@ export const apiRateLimiter = rateLimit({
   max: 120,            // 2 requests/second sustained - plenty for a game overlay
   standardHeaders: true,
   legacyHeaders: false,
-  handler: (req, res) => sendError(res, "request rate too high, slow down", 429, "RATE_LIMITED"),
+  handler: (_req, res) => sendError(res, "request rate too high, slow down", 429, "RATE_LIMITED"),
 });
 
 // room creation - prevent someone spinning up hundreds of rooms
@@ -32,7 +32,7 @@ export const roomCreateRateLimiter = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
-  handler: (req, res) => sendError(res, "room creation limit reached for this hour", 429, "RATE_LIMITED"),
+  handler: (_req, res) => sendError(res, "room creation limit reached for this hour", 429, "RATE_LIMITED"),
 });
 
 // translate - limited because mymemory has a daily quota
@@ -42,5 +42,5 @@ export const translateRateLimiter = rateLimit({
   max: 30,
   standardHeaders: true,
   legacyHeaders: false,
-  handler: (req, res) => sendError(res, "translation rate limit hit, wait a moment", 429, "RATE_LIMITED"),
+  handler: (_req, res) => sendError(res, "translation rate limit hit, wait a moment", 429, "RATE_LIMITED"),
 });

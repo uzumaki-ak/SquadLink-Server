@@ -28,25 +28,25 @@ export interface ServerToClientEvents {
 }
 
 // ─── events the CLIENT emits to the server ────────────────────────────────────
-
+// all emits can return an acknowledgment to confirm processing
 export interface ClientToServerEvents {
   // join a room's socket channel after http join succeeds
-  "room:join": (payload: { roomId: string }, ack: AckCallback) => void;
-  "room:leave": (payload: { roomId: string }, ack: AckCallback) => void;
+  "room:join": (payload: { roomId: string }, ack: AckCallback<void>) => void;
+  "room:leave": (payload: { roomId: string }, ack: AckCallback<void>) => void;
 
   // chat
-  "chat:send": (payload: SendChatPayload, ack: AckCallback) => void;
+  "chat:send": (payload: SendChatPayload, ack: AckCallback<ChatMessagePayload>) => void;
 
   // subtitles: client sends a transcribed line (vosk output) for broadcasting
-  "subtitle:send": (payload: SendSubtitlePayload, ack: AckCallback) => void;
+  "subtitle:send": (payload: SendSubtitlePayload, ack: AckCallback<{ messageId: string }>) => void;
 
   // webrtc signaling - relayed server-side, not processed
-  "webrtc:offer": (payload: WebRtcSignalPayload, ack: AckCallback) => void;
-  "webrtc:answer": (payload: WebRtcSignalPayload, ack: AckCallback) => void;
-  "webrtc:ice_candidate": (payload: IceCandidatePayload, ack: AckCallback) => void;
+  "webrtc:offer": (payload: WebRtcSignalPayload, ack: AckCallback<void>) => void;
+  "webrtc:answer": (payload: WebRtcSignalPayload, ack: AckCallback<void>) => void;
+  "webrtc:ice_candidate": (payload: IceCandidatePayload, ack: AckCallback<void>) => void;
 
-  // voice state changes
-  "voice:set_mute": (payload: { roomId: string; isMuted: boolean }, ack: AckCallback) => void;
+  // voice state re-sync
+  "voice:set_mute": (payload: { roomId: string; isMuted: boolean }, ack: AckCallback<void>) => void;
 }
 
 // ─── payload types ─────────────────────────────────────────────────────────────
@@ -93,6 +93,19 @@ export interface SendSubtitlePayload {
   originalText: string;
   originalLang: string;
 }
+
+// internal signaling types - defined here to avoid needing the full DOM lib in node
+export type RTCSessionDescriptionInit = {
+  type: "offer" | "answer" | "pranswer" | "rollback";
+  sdp: string;
+};
+
+export type RTCIceCandidateInit = {
+  candidate: string;
+  sdpMid?: string | null;
+  sdpMLineIndex?: number | null;
+  usernameFragment?: string | null;
+};
 
 export interface WebRtcSignalPayload {
   roomId: string;

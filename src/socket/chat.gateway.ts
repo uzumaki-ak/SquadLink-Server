@@ -39,7 +39,13 @@ function withAck<T>(
   ack: AckCallback<T>
 ): void {
   handler()
-    .then((data) => ack({ ok: true, data: data ?? undefined }))
+    .then((data) => {
+      if (data === undefined) {
+        ack({ ok: true });
+      } else {
+        ack({ ok: true, data: data as T });
+      }
+    })
     .catch((err) => {
       const message = err instanceof AppError ? err.message : "something went wrong";
       const code = err instanceof AppError ? err.code : "INTERNAL_ERROR";

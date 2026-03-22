@@ -11,7 +11,6 @@ import { requireAuth } from "../../middleware/auth.middleware.js";
 import { validate } from "../../middleware/validate.middleware.js";
 import { createRoomSchema, joinRoomSchema } from "./rooms.types.js";
 import { roomCreateRateLimiter } from "../../middleware/rateLimiter.middleware.js";
-import { z } from "zod";
 
 const router: Router = Router();
 
