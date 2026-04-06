@@ -30,9 +30,10 @@ async function findSocketByUserId(
 }
 
 // safe ack wrapper
-function withAck<T>(handler: () => Promise<T>, ack: AckCallback<T>): void {
+function withAck<T>(handler: () => Promise<T>, ack?: AckCallback<T>): void {
   handler()
     .then((data) => {
+      if (!ack) return;
       if (data === undefined) {
         ack({ ok: true });
       } else {
@@ -41,7 +42,11 @@ function withAck<T>(handler: () => Promise<T>, ack: AckCallback<T>): void {
     })
     .catch((err) => {
       const message = err instanceof AppError ? err.message : "relay failed";
-      ack({ ok: false, error: message });
+      if (ack) {
+        ack({ ok: false, error: message });
+      } else {
+        logger.warn("signaling relay error", { message });
+      }
     });
 }
 
