@@ -22,6 +22,7 @@ export interface ServerToClientEvents {
 
   // voice state
   "voice:mute_state": (payload: MuteStatePayload) => void;
+  "music:sync": (payload: MusicSyncPayload) => void;
 
   // error (for socket-level errors, not http errors)
   "error": (payload: { message: string; code: string }) => void;
@@ -47,6 +48,9 @@ export interface ClientToServerEvents {
 
   // voice state re-sync
   "voice:set_mute": (payload: { roomId: string; isMuted: boolean }, ack: AckCallback<void>) => void;
+
+  // room music sync (URL-based shared playback commands)
+  "music:sync": (payload: SendMusicSyncPayload, ack: AckCallback<void>) => void;
 }
 
 // ─── payload types ─────────────────────────────────────────────────────────────
@@ -125,6 +129,25 @@ export interface MuteStatePayload {
   roomId: string;
   userId: string;
   isMuted: boolean;
+}
+
+export interface SendMusicSyncPayload {
+  roomId: string;
+  action: "LOAD" | "PLAY" | "PAUSE" | "SEEK" | "STOP";
+  trackUrl?: string | null;
+  trackTitle?: string | null;
+  positionMs?: number | null;
+}
+
+export interface MusicSyncPayload {
+  roomId: string;
+  action: "LOAD" | "PLAY" | "PAUSE" | "SEEK" | "STOP";
+  trackUrl: string | null;
+  trackTitle: string | null;
+  positionMs: number | null;
+  byUserId: string;
+  byUsername: string;
+  issuedAt: string;
 }
 
 // socket acknowledgement callback - client waits for this to confirm delivery

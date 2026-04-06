@@ -14,6 +14,7 @@ import type {
   SocketData,
   SendChatPayload,
   SendSubtitlePayload,
+  SendMusicSyncPayload,
   AckCallback,
 } from "./socket.types.js";
 
@@ -206,24 +207,46 @@ export function registerChatGateway(io: IoServer, socket: AppSocket): void {
     }, ack);
   });
 
+  socket.on("music:sync", (payload: SendMusicSyncPayload, ack) => {
+    withAck(async () => {
+      const { roomId, action } = payload;
+      await assertSocketMembership(userId, roomId);
+
+      const validActions = new Set(["LOAD", "PLAY", "PAUSE", "SEEK", "STOP"]);
+      if (!validActions.has(action)) {
+        throw new AppError("invalid music sync action", 400, "INVALID_MUSIC_ACTION");
+      }
+
+      if ((action === "LOAD" || action === "PLAY") && payload.trackUrl) {
+        const isHttpUrl = /^https?:\/\//i.test(payload.trackUrl);
+        if (!isHttpUrl) {
+          throw new AppError("shared track URL must be http/https", 400, "INVALID_TRACK_URL");
+        }
+      }
+
+      const positionMs = typeof payload.positionMs === "number"
+        ? Math.max(0, Math.floor(payload.positionMs))
+        : null;
+
+      io.to(roomId).emit("music:sync", {
+        roomId,
+        action,
+        trackUrl: payload.trackUrl ?? null,
+        trackTitle: payload.trackTitle ?? null,
+        positionMs,
+        byUserId: userId,
+        byUsername: username,
+        issuedAt: new Date().toISOString(),
+      });
+    }, ack);
+  });
+
   // ─── ungraceful disconnect cleanup ──────────────────────────────────────
   socket.on("disconnect", async () => {
     const joinedRooms = Array.from(socket.rooms).filter((r) => r !== socket.id);
 
     for (const roomId of joinedRooms) {
       socket.to(roomId).emit("room:member_left", { userId, username });
-    }
-
-    try {
-      await prisma.roomMember.updateMany({
-        where: { userId, leftAt: null },
-        data: { leftAt: new Date() },
-      });
-    } catch (err) {
-      logger.error("failed to clean up memberships on disconnect", {
-        userId,
-        error: (err as Error).message,
-      });
     }
   });
 }
