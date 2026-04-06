@@ -37,10 +37,11 @@ async function assertSocketMembership(userId: string, roomId: string): Promise<v
 // prevents unhandled promise rejections from crashing the event loop
 function withAck<T>(
   handler: () => Promise<T>,
-  ack: AckCallback<T>
+  ack?: AckCallback<T>
 ): void {
   handler()
     .then((data) => {
+      if (!ack) return;
       if (data === undefined) {
         ack({ ok: true });
       } else {
@@ -51,7 +52,11 @@ function withAck<T>(
       const message = err instanceof AppError ? err.message : "something went wrong";
       const code = err instanceof AppError ? err.code : "INTERNAL_ERROR";
       logger.warn("socket event error", { message, code });
-      ack({ ok: false, error: message });
+      if (ack) {
+        ack({ ok: false, error: message });
+      } else {
+        logger.warn("socket event error (no ack callback)", { message, code });
+      }
     });
 }
 

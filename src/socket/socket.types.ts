@@ -32,25 +32,25 @@ export interface ServerToClientEvents {
 // all emits can return an acknowledgment to confirm processing
 export interface ClientToServerEvents {
   // join a room's socket channel after http join succeeds
-  "room:join": (payload: { roomId: string }, ack: AckCallback<void>) => void;
-  "room:leave": (payload: { roomId: string }, ack: AckCallback<void>) => void;
+  "room:join": (payload: { roomId: string }, ack?: AckCallback<void>) => void;
+  "room:leave": (payload: { roomId: string }, ack?: AckCallback<void>) => void;
 
   // chat
-  "chat:send": (payload: SendChatPayload, ack: AckCallback<ChatMessagePayload>) => void;
+  "chat:send": (payload: SendChatPayload, ack?: AckCallback<ChatMessagePayload>) => void;
 
   // subtitles: client sends a transcribed line (vosk output) for broadcasting
-  "subtitle:send": (payload: SendSubtitlePayload, ack: AckCallback<{ messageId: string }>) => void;
+  "subtitle:send": (payload: SendSubtitlePayload, ack?: AckCallback<{ messageId: string }>) => void;
 
   // webrtc signaling - relayed server-side, not processed
-  "webrtc:offer": (payload: WebRtcSignalPayload, ack: AckCallback<void>) => void;
-  "webrtc:answer": (payload: WebRtcSignalPayload, ack: AckCallback<void>) => void;
-  "webrtc:ice_candidate": (payload: IceCandidatePayload, ack: AckCallback<void>) => void;
+  "webrtc:offer": (payload: WebRtcSignalPayload, ack?: AckCallback<void>) => void;
+  "webrtc:answer": (payload: WebRtcSignalPayload, ack?: AckCallback<void>) => void;
+  "webrtc:ice_candidate": (payload: IceCandidatePayload, ack?: AckCallback<void>) => void;
 
   // voice state re-sync
-  "voice:set_mute": (payload: { roomId: string; isMuted: boolean }, ack: AckCallback<void>) => void;
+  "voice:set_mute": (payload: { roomId: string; isMuted: boolean }, ack?: AckCallback<void>) => void;
 
   // room music sync (URL-based shared playback commands)
-  "music:sync": (payload: SendMusicSyncPayload, ack: AckCallback<void>) => void;
+  "music:sync": (payload: SendMusicSyncPayload, ack?: AckCallback<void>) => void;
 }
 
 // ─── payload types ─────────────────────────────────────────────────────────────
